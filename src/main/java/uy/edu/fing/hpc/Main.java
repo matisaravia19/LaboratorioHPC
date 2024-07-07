@@ -12,7 +12,11 @@ public class Main {
     private static final String OSM_PATH = "C:/Users/matis/OneDrive/Documentos/Fing/HPC/uruguay-latest.osm.pbf";
 
     public static void main(String[] args) {
-        DataSource.load(CONTAINERS_PATH, CIRCUITS_PATH);
+        var dataSource = new DataSource(CONTAINERS_PATH, CIRCUITS_PATH);
+        dataSource.load();
+
+        var containers = dataSource.getContainers();
+        var circuits = dataSource.getCircuits();
 
         //Router.getInstance().init(containers);
 

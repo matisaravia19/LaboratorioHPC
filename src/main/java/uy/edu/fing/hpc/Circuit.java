@@ -1,13 +1,18 @@
 package uy.edu.fing.hpc;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class Circuit {
     private Day day;
     private Shift shift;
     private int truckId;
     private long cost;
-    private ArrayList<Container> containers = new ArrayList<>();
+    private List<Container> containers;
+
+    public Circuit(List<Container> containers) {
+        this.containers = containers;
+    }
 
     private double calculateCost() {
         if (containers.size() > Constants.TRUCK_CAPACITY) {

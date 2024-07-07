@@ -11,6 +11,7 @@ import uy.edu.fing.hpc.im.IMShift;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -20,12 +21,20 @@ public class DataSource {
     private static final CoordinateTransform transform;
     private static final Pattern polygonPattern = Pattern.compile("POLYGON \\(\\((.*)\\)\\)");
 
-    private static List<IMContainer> containers;
-    private static List<IMCircuit> circuits;
+    private String containerFile;
+    private String circuitFile;
 
-    private static Map<String, List<IMContainer>> circuitMap;
+    private List<IMContainer> imContainers;
+    private List<IMCircuit> imCircuits;
 
-    static {
+    private Map<String, List<IMContainer>> imCircuitMap;
+
+    private List<Container> containers;
+    private List<Circuit> circuits;
+
+    private Map<Integer, Container> containerIdMap;
+
+    static  {
         CRSFactory crsFactory = new CRSFactory();
         var sourceCrs = crsFactory.createFromName("EPSG:31981");
         var targetCrs = crsFactory.createFromName("EPSG:4326");
@@ -34,11 +43,26 @@ public class DataSource {
         transform = ctFactory.createTransform(sourceCrs, targetCrs);
     }
 
-    public static void load(String containerFile, String circuitFile) {
-        containers = readContainers(containerFile);
-        circuits = readCircuits(circuitFile);
+    public DataSource(String containerFile, String circuitFile) {
+        this.containerFile = containerFile;
+        this.circuitFile = circuitFile;
+    }
 
-        circuitMap = containers.stream().collect(Collectors.groupingBy(IMContainer::getCircuit));
+    public void load() {
+        imContainers = readContainers(containerFile);
+        imCircuits = readCircuits(circuitFile);
+
+        imCircuitMap = imContainers.stream().collect(Collectors.groupingBy(IMContainer::getCircuit));
+
+        containers = imContainers.stream()
+                .map(this::toContainer)
+                .collect(Collectors.toList());
+
+        containerIdMap = containers.stream().collect(Collectors.toMap(Container::getId, c -> c));
+
+        circuits = imCircuits.stream()
+                .map(this::toCircuit)
+                .collect(Collectors.toList());
     }
 
     private static List<IMContainer> readContainers(String filename) {
@@ -54,14 +78,14 @@ public class DataSource {
 
         var id = Integer.parseInt(parts[0]);
         var circuit = parts[1];
-        var shift = getShift(parts[2]);
+        var shift = readShift(parts[2]);
         var x = Double.parseDouble(parts[3]);
         var y = Double.parseDouble(parts[4]);
 
         return new IMContainer(id, circuit, shift, x, y);
     }
 
-    private static IMShift getShift(String shiftName) {
+    private static IMShift readShift(String shiftName) {
         shiftName = shiftName.substring(1, shiftName.length() - 1).trim();
         return switch (shiftName) {
             case "DOMINGOS Y DOMINGOS FERIADOS: Matutino (06 a 14 hrs.)" -> IMShift.SUN_MORNING;
@@ -82,7 +106,7 @@ public class DataSource {
         };
     }
 
-    public static List<IMCircuit> readCircuits(String filename) {
+    private static List<IMCircuit> readCircuits(String filename) {
         try (var stream = Files.lines(Paths.get(filename))) {
             return stream.skip(1).map(DataSource::readCircuit).toList();
         } catch (IOException e) {
@@ -101,9 +125,58 @@ public class DataSource {
             throw new IllegalArgumentException("Invalid polygon format: " + parts[3]);
         }
 
-        var points = matcher.group(1).split(",");
+        var points = matcher.group(1).split(", ");
 
         return new IMCircuit(id, name, points);
+    }
+
+    public List<Container> getContainers() {
+        return containers;
+    }
+
+    private Container toContainer(IMContainer imContainer) {
+        var frequency = getFrequency(imContainer.getShift());
+        var coordinates = transformCoordinates(imContainer.getX(), imContainer.getY());
+        return new Container(imContainer.getId(), frequency, coordinates.y, coordinates.x);
+    }
+
+    public List<Circuit> getCircuits() {
+        return circuits;
+    }
+
+    private Circuit toCircuit(IMCircuit imCircuit) {
+        var imCircuitContainers = imCircuitMap.get(imCircuit.getName());
+
+        var route = new ArrayList<Container>(imCircuitContainers.size());
+        for (var point : imCircuit.getPoints()) {
+            var containerId = getContainerIdClosestToPoint(point, imCircuitContainers);
+            var container = containerIdMap.get(containerId);
+            route.add(container);
+        }
+
+        return new Circuit(route);
+    }
+
+    private static int getContainerIdClosestToPoint(String point, List<IMContainer> containers) {
+        var parts = point.split(" ");
+        var x = Double.parseDouble(parts[0]);
+        var y = Double.parseDouble(parts[1]);
+
+        var closestContainer = containers.getFirst();
+        var closestDistance = Double.MAX_VALUE;
+        for (var container : containers) {
+            var distance = distance(x, y, container);
+            if (distance < closestDistance) {
+                closestContainer = container;
+                closestDistance = distance;
+            }
+        }
+
+        return closestContainer.getId();
+    }
+
+    private static double distance(double x, double y, IMContainer container) {
+        return Math.hypot(x - container.getX(), y - container.getY());
     }
 
 //    private static Circuit readCircuitOld(String line, Map<String, List<Container>> circuitMap) {
@@ -150,6 +223,14 @@ public class DataSource {
         var result = new ProjCoordinate();
         transform.transform(new ProjCoordinate(x, y), result);
         return result;
+    }
+
+    private static Frequency getFrequency(IMShift shift) {
+        return switch (shift) {
+            case SUN_MORNING -> Frequency.SUNDAYS;
+            case MON_TO_SAT_AFTERNOON, SUN_TO_FRI_NIGHT -> Frequency.SIX_TIMES_A_WEEK;
+            default -> Frequency.THREE_TIMES_A_WEEK;
+        };
     }
 
 //    private static int getFrequency(String shiftName) {
