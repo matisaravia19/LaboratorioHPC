@@ -1,14 +1,12 @@
 package uy.edu.fing.hpc;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 public class Circuit {
     private Day day;
     private Shift shift;
     private int truckId;
-    private double cost;
+    private long cost;
     private ArrayList<Container> containers = new ArrayList<>();
 
     private double calculateCost() {
@@ -17,8 +15,10 @@ public class Circuit {
         }
 
         cost = 0;
-        for (Container container : containers) {
-            cost += 100; // Placeholder for the cost calculation
+        for (int i = 1; i < containers.size(); i++) {
+            Container container = containers.get(i);
+            Container previousContainer = containers.get(i - 1);
+            cost += Router.getInstance().getRouteTime(previousContainer, container);
         }
 
         return cost;
