@@ -10,11 +10,16 @@ public class Circuit {
     private long cost;
     private List<Container> containers;
 
+    public Circuit(Shift shift) {
+        this.shift = shift;
+        containers = new ArrayList<>();
+    }
+
     public Circuit(List<Container> containers) {
         this.containers = containers;
     }
 
-    private double calculateCost() {
+    public double calculateCost() {
         if (containers.size() > Constants.TRUCK_CAPACITY) {
             return Constants.INFINITE_COST;
         }
@@ -29,7 +34,15 @@ public class Circuit {
         return cost;
     }
 
-    public Iterable<Container> getContainers() {
+    public List<Container> getContainers() {
         return containers;
+    }
+
+    public void addContainer(Container container) {
+        containers.add(container);
+    }
+
+    public boolean isFull() {
+        return containers.size() == Constants.TRUCK_CAPACITY;
     }
 }
