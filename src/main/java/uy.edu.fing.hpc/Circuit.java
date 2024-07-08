@@ -4,24 +4,24 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Circuit {
-    private Day day;
     private Shift shift;
     private int truckId;
     private long cost;
-    private List<Container> containers;
+    private final List<Container> containers;
 
     public Circuit(Shift shift) {
         this.shift = shift;
         containers = new ArrayList<>();
     }
 
-    public Circuit(List<Container> containers) {
+    private Circuit(Shift shift, List<Container> containers) {
+        this.shift = shift;
         this.containers = containers;
     }
 
-    public double calculateCost() {
+    public long calculateCost() {
         if (containers.size() > Constants.TRUCK_CAPACITY) {
-            return Constants.INFINITE_COST;
+            return Long.MAX_VALUE;
         }
 
         cost = 0;
@@ -30,6 +30,9 @@ public class Circuit {
             Container previousContainer = containers.get(i - 1);
             cost += Router.getInstance().getRouteTime(previousContainer, container);
         }
+
+        cost += Router.getInstance().getRouteTimeFromLandfill(containers.getFirst());
+        cost += Router.getInstance().getRouteTimeToLandfill(containers.getLast());
 
         return cost;
     }
@@ -44,5 +47,17 @@ public class Circuit {
 
     public boolean isFull() {
         return containers.size() == Constants.TRUCK_CAPACITY;
+    }
+
+    public void switchTwoRandomContainers() {
+        int i = (int) (Math.random() * containers.size());
+        int j = (int) (Math.random() * containers.size());
+        Container temp = containers.get(i);
+        containers.set(i, containers.get(j));
+        containers.set(j, temp);
+    }
+
+    public Circuit copy() {
+        return new Circuit(shift, new ArrayList<>(containers));
     }
 }

@@ -14,7 +14,13 @@ public class Main {
 
         Router.getInstance().init(containers);
 
-        var cost = circuits.getFirst().calculateCost();
+        var solution = new Solution(circuits);
+
+        System.out.println("Costo inicial: " + solution.computeCost());
+
+        var neighbor = solution.getNeighbor();
+
+        System.out.println("Costo vecino: " + neighbor.computeCost());
 
         System.out.println("Listo");
     }

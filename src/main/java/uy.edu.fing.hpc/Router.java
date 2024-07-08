@@ -13,6 +13,7 @@ import java.util.Map;
 
 public class Router {
     private static final Router instance = new Router();
+    private static final GHPoint landfillPoint = new GHPoint(-34.84856638301756, -56.0942988400724);
 
     private Map<Integer, GHPoint> points;
     private GraphHopper hopper;
@@ -51,9 +52,23 @@ public class Router {
         var fromPoint = points.get(from.getId());
         var toPoint = points.get(to.getId());
 
+        return getRouteTime(fromPoint, toPoint);
+    }
+
+    public long getRouteTimeToLandfill(Container from) {
+        var fromPoint = points.get(from.getId());
+        return getRouteTime(fromPoint, landfillPoint);
+    }
+
+    public long getRouteTimeFromLandfill(Container to) {
+        var toPoint = points.get(to.getId());
+        return getRouteTime(landfillPoint, toPoint);
+    }
+
+    private long getRouteTime(GHPoint from, GHPoint to) {
         var request = new GHRequest()
-                .addPoint(fromPoint)
-                .addPoint(toPoint)
+                .addPoint(from)
+                .addPoint(to)
                 .setProfile("car");
         var response = hopper.route(request);
 
