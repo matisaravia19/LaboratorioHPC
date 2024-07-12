@@ -16,7 +16,7 @@ public class Solution {
     public long computeCost() {
         long cost = 0;
         for (var circuit : circuits) {
-            cost += circuit.calculateCost();
+            cost += circuit.getCost();
         }
         return cost;
     }
@@ -25,13 +25,21 @@ public class Solution {
         var neighbor = copy();
 
         var i = (int) (Math.random() * circuits.size());
-        neighbor.circuits.get(i).switchTwoRandomContainers();
+        var circuit = neighbor.circuits.get(i).copy();
+        neighbor.circuits.set(i, circuit);
+
+        circuit.switchTwoRandomContainers();
 
         return neighbor;
     }
 
-    public Solution copy() {
+    public Solution fullCopy() {
         var circuitsCopy = circuits.stream().map(Circuit::copy).toList();
+        return new Solution(circuitsCopy);
+    }
+
+    private Solution copy() {
+        var circuitsCopy = new ArrayList<>(circuits);
         return new Solution(circuitsCopy);
     }
 

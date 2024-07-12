@@ -12,14 +12,20 @@ public class Circuit {
     public Circuit(Shift shift) {
         this.shift = shift;
         containers = new ArrayList<>();
+        cost = -1;
     }
 
     private Circuit(Shift shift, List<Container> containers) {
         this.shift = shift;
         this.containers = containers;
+        cost = -1;
     }
 
-    public long calculateCost() {
+    public long getCost() {
+        if (cost >= 0) {
+            return cost;
+        }
+
         if (containers.size() > Constants.TRUCK_CAPACITY) {
             return Long.MAX_VALUE;
         }

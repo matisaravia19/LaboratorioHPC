@@ -14,12 +14,23 @@ public class Main {
         Router.getInstance().init(containers, OSM_PATH);
 
         var solution = new Solution(circuits);
+        var cost = solution.computeCost();
 
-        System.out.println("Costo inicial: " + solution.computeCost());
+        System.out.println("Costo inicial: " + cost);
 
-        var neighbor = solution.getNeighbor();
+        for (var i = 0; i < 1000; i++) {
+            var neighbor = solution.getNeighbor();
+            var neighborCost = neighbor.computeCost();
 
-        System.out.println("Costo vecino: " + neighbor.computeCost());
+            if (neighborCost < cost) {
+                solution = neighbor;
+                cost = neighborCost;
+
+                System.out.println("Nuevo costo: " + neighborCost + " en iteración " + i);
+            }
+        }
+
+        System.out.println("Costo final: " + cost);
 
         System.out.println("Listo");
     }

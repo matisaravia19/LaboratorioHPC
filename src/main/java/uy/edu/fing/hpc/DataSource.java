@@ -97,7 +97,7 @@ public class DataSource {
     }
 
     public List<Circuit> getCircuits() {
-        return circuits.values().stream().flatMap(List::stream).collect(Collectors.toList());
+        return circuits.values().stream().flatMap(List::stream).collect(Collectors.toCollection(ArrayList::new));
     }
 
     private static ProjCoordinate transformCoordinates(double x, double y) {
