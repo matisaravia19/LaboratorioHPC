@@ -51,7 +51,7 @@ public class Main {
 					int startIteration = i * iterationsPerThread;
 					int endIteration = (i + 1) * iterationsPerThread;
 					futures.add(executorService.submit(
-							new Worker7(solution, startIteration, endIteration, visitedNeighbors, semaphore, cost)));
+							new Worker(solution, startIteration, endIteration, visitedNeighbors, semaphore, cost)));
 				}
 				
 				// Esperar a que todas las tareas terminen
