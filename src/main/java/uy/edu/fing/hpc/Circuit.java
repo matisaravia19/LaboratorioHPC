@@ -4,8 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Circuit {
-    private Shift shift;
-    private int truckId;
+    private final Shift shift;
     private long cost;
     private final List<Container> containers;
 
@@ -47,12 +46,28 @@ public class Circuit {
         return containers;
     }
 
+    public Shift getShift() {
+        return shift;
+    }
+
     public void addContainer(Container container) {
         containers.add(container);
     }
 
+    public void removeContainer(Container container) {
+        containers.remove(container);
+    }
+
     public boolean isFull() {
         return containers.size() == Constants.TRUCK_CAPACITY;
+    }
+
+    public boolean isEmpty() {
+        return containers.isEmpty();
+    }
+
+    public Container getRandomContainer() {
+        return containers.get(Random.getRandomIndex(containers.size()));
     }
 
     public void switchTwoRandomContainers() {
@@ -61,6 +76,40 @@ public class Circuit {
         Container temp = containers.get(i);
         containers.set(i, containers.get(j));
         containers.set(j, temp);
+    }
+
+    public void replaceContainer(Container oldContainer, Container newContainer) {
+        int index = containers.indexOf(oldContainer);
+        containers.set(index, newContainer);
+    }
+
+    public Circuit split() {
+        if (isEmpty()) {
+            return new Circuit(shift);
+        }
+
+        var i = Random.getRandomIndex(containers.size());
+
+        var firstHalf = containers.subList(0, i);
+        var secondHalf = containers.subList(i, containers.size());
+
+        var newCircuit = new Circuit(shift, new ArrayList<>(secondHalf));
+
+        containers.clear();
+        containers.addAll(firstHalf);
+
+        return newCircuit;
+    }
+
+    public boolean merge(Circuit other) {
+        if (containers.size() + other.containers.size() > Constants.TRUCK_CAPACITY) {
+            return false;
+        }
+
+        containers.addAll(other.containers);
+        other.containers.clear();
+
+        return true;
     }
 
     public Circuit copy() {
