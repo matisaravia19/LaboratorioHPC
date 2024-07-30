@@ -29,6 +29,10 @@ public class Circuit {
             return Long.MAX_VALUE;
         }
 
+        if(containers.isEmpty()){
+            return 0;
+        }
+
         cost = 0;
         for (int i = 1; i < containers.size(); i++) {
             Container container = containers.get(i);
@@ -90,13 +94,9 @@ public class Circuit {
 
         var i = Random.getRandomIndex(containers.size());
 
-        var firstHalf = containers.subList(0, i);
         var secondHalf = containers.subList(i, containers.size());
-
         var newCircuit = new Circuit(shift, new ArrayList<>(secondHalf));
-
-        containers.clear();
-        containers.addAll(firstHalf);
+        secondHalf.clear();
 
         return newCircuit;
     }

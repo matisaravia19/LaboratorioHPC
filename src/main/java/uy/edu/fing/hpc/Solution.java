@@ -10,9 +10,14 @@ public class Solution {
 
     public Solution(List<Circuit> circuits) {
         this.circuits = circuits;
+        this.cost = -1;
     }
 
     public long computeCost() {
+        if (cost >= 0) {
+            return cost;
+        }
+
         long cost = 0;
         for (var circuit : circuits) {
             cost += circuit.getCost();
@@ -39,6 +44,11 @@ public class Solution {
         var neighbor = copy();
 
         var circuit = neighbor.copyRandomCircuit();
+
+        if (circuit.isEmpty()) {
+            return neighbor;
+        }
+
         circuit.switchTwoRandomContainers();
 
         return neighbor;
@@ -49,6 +59,10 @@ public class Solution {
 
         var circuit1 = neighbor.copyRandomCircuit();
         var circuit2 = neighbor.copyRandomCircuitWithSameShiftAs(circuit1);
+
+        if (circuit1.isEmpty() || circuit2.isEmpty()) {
+            return neighbor;
+        }
 
         var container1 = circuit1.getRandomContainer();
         var container2 = circuit2.getRandomContainer();
@@ -80,6 +94,13 @@ public class Solution {
         var neighbor = copy();
 
         var circuit = neighbor.copyRandomCircuit();
+
+        var circuitsInShift = neighbor.circuits.stream()
+                .filter(c -> c.getShift() == circuit.getShift())
+                .count();
+        if (circuitsInShift >= Constants.TRUCK_COUNT) {
+            return neighbor;
+        }
 
         var newCircuit = circuit.split();
         neighbor.circuits.add(newCircuit);

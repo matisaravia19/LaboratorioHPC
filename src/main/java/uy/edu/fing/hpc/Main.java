@@ -9,7 +9,7 @@ import java.util.concurrent.Semaphore;
 public class Main {
 	private static final String CONTAINERS_PATH = "data/containers.csv";
 	private static final String OSM_PATH = "data/uruguay-latest.osm.pbf";
-	private static final int NUM_THREADS = 4; // Número de hilos
+	private static final int NUM_THREADS = 12; // Número de hilos
 	private static final double TEMPERATURE = 100.0; // Initial temperature
 	private static final double TEMPERATURE_DECAY = 0.95; // Temperature decay factor
 
@@ -17,7 +17,7 @@ public class Main {
 		try {
 			var dataSource = new DataSource(CONTAINERS_PATH);
 			dataSource.load();
-			double temperature = TEMPERATURE;
+			double temperature = Constants.INITIAL_TEMPERATURE;
 			var containers = dataSource.getContainers();
 			var circuits = dataSource.getCircuits();
 
@@ -31,43 +31,28 @@ public class Main {
 
 			// Estructura concurrente para almacenar los vecinos recorridos
 			ConcurrentHashMap<Solution, Long> visitedNeighbors = new ConcurrentHashMap<>();
-			Long bestFinalCost = cost;
-			
-
-			// Semáforo para controlar el acceso a la variable cost y al hash
-			Semaphore semaphore = new Semaphore(1);
-			Semaphore semaphoreBest = new Semaphore(1);
+			long bestFinalCost = cost;
 
 			// Crear un pool de hilos
 			ExecutorService executorService = Executors.newFixedThreadPool(NUM_THREADS);
 
-			// Crear tareas para paralelizar las iteraciones
-			int totalIterations = 2000;
-			int iterationsPerThread = totalIterations / NUM_THREADS;
-
-			while (temperature > 90) {
+			while (temperature > Constants.MIN_TEMPERATURE) {
 				List<Future<Solution>> futures = new ArrayList<>();
 				for (int i = 0; i < NUM_THREADS; i++) {
-					int startIteration = i * iterationsPerThread;
-					int endIteration = (i + 1) * iterationsPerThread;
-					futures.add(executorService.submit(
-							new Worker(solution, startIteration, endIteration, visitedNeighbors, semaphore, cost)));
+					futures.add(executorService.submit(new Worker(solution, temperature)));
 				}
 				
 				// Esperar a que todas las tareas terminen
 				for (Future<Solution> future : futures) {
-					
 					solution = future.get();
-					cost = visitedNeighbors.get(solution);
+					cost = solution.computeCost();
 					
-					semaphoreBest.acquire();
-					if(bestFinalCost > cost) {
-						bestFinalCost = cost;
-					}
-					semaphoreBest.release();
+					bestFinalCost = cost;
 				}
 
-				temperature *= TEMPERATURE_DECAY;
+				System.out.println("Costo actual: " + bestFinalCost);
+
+				temperature *= Constants.TEMPERATURE_DECREASE_FACTOR;
 			}
 
 			executorService.shutdown();

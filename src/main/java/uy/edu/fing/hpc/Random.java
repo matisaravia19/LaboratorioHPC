@@ -8,4 +8,8 @@ public class Random {
     public static int nextInt(int bound) {
         return (int) (Math.random() * bound);
     }
+
+    public static double nextDouble() {
+        return Math.random();
+    }
 }
