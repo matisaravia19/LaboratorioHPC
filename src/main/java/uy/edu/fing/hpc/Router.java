@@ -10,6 +10,8 @@ import com.graphhopper.util.shapes.GHPoint;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Router {
     private static final Router instance = new Router();
@@ -18,7 +20,10 @@ public class Router {
     private Map<Integer, GHPoint> points;
     private GraphHopper hopper;
 
+    private ConcurrentHashMap<Route, Long> routeCache;
+
     private Router() {
+        routeCache = new ConcurrentHashMap<>();
     }
 
     public static Router getInstance() {
@@ -52,26 +57,30 @@ public class Router {
         var fromPoint = points.get(from.getId());
         var toPoint = points.get(to.getId());
 
-        return getRouteTime(fromPoint, toPoint);
+        return getRoute(fromPoint, toPoint);
     }
 
     public long getRouteTimeToLandfill(Container from) {
         var fromPoint = points.get(from.getId());
-        return getRouteTime(fromPoint, landfillPoint);
+        return getRoute(fromPoint, landfillPoint);
     }
 
     public long getRouteTimeFromLandfill(Container to) {
         var toPoint = points.get(to.getId());
-        return getRouteTime(landfillPoint, toPoint);
+        return getRoute(landfillPoint, toPoint);
     }
 
-    private long getRouteTime(GHPoint from, GHPoint to) {
-        var request = new GHRequest()
-                .addPoint(from)
-                .addPoint(to)
-                .setProfile("car");
-        var response = hopper.route(request);
+    private long getRoute(GHPoint from, GHPoint to) {
+        var route = new Route(from, to);
 
-        return response.getBest().getTime();
+        var cost = routeCache.get(route);
+        if (cost != null) {
+            return cost;
+        }
+
+        cost = route.calculate(hopper);
+        routeCache.put(route, cost);
+
+        return cost;
     }
 }

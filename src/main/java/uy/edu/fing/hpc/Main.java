@@ -9,7 +9,7 @@ import java.util.concurrent.Semaphore;
 public class Main {
 	private static final String CONTAINERS_PATH = "data/containers.csv";
 	private static final String OSM_PATH = "data/uruguay-latest.osm.pbf";
-	private static final int NUM_THREADS = 12; // Número de hilos
+	private static final int NUM_THREADS = 1; // Número de hilos
 	private static final double TEMPERATURE = 100.0; // Initial temperature
 	private static final double TEMPERATURE_DECAY = 0.95; // Temperature decay factor
 
