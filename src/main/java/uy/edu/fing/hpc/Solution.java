@@ -3,6 +3,7 @@ package uy.edu.fing.hpc;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Solution {
     private long cost;
@@ -25,12 +26,28 @@ public class Solution {
         return cost;
     }
 
-    public Solution getNeighbor() {
-        var randomNeighborType = NeighborType.getRandom();
-        return getNegihbor(randomNeighborType);
+    public List<Solution> splitByShifts() {
+        return circuits.stream()
+                .collect(Collectors.groupingBy(Circuit::getShift))
+                .values().stream()
+                .map(circuits -> new Solution(new ArrayList<>(circuits)))
+                .toList();
     }
 
-    public Solution getNegihbor(NeighborType type){
+    public static Solution merge(List<Solution> solutions) {
+        var circuits = solutions.stream()
+                .map(solution -> solution.circuits)
+                .flatMap(List::stream)
+                .toList();
+        return new Solution(circuits);
+    }
+
+    public Solution getNeighbor() {
+        var randomNeighborType = NeighborType.getRandom();
+        return getNeighbor(randomNeighborType);
+    }
+
+    public Solution getNeighbor(NeighborType type){
         return switch (type) {
             case SWITCH_TWO_RANDOM_CONTAINERS_IN_CIRCUIT -> getNeighborSwitchTwoRandomContainersInCircuit();
             case SWITCH_TWO_RANDOM_CONTAINERS_BETWEEN_CIRCUITS -> getNeighborSwitchTwoRandomContainersBetweenCircuits();

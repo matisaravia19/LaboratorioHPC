@@ -9,57 +9,40 @@ import java.util.concurrent.Semaphore;
 public class Main {
 	private static final String CONTAINERS_PATH = "data/containers.csv";
 	private static final String OSM_PATH = "data/uruguay-latest.osm.pbf";
-	private static final int NUM_THREADS = 1; // Número de hilos
-	private static final double TEMPERATURE = 100.0; // Initial temperature
-	private static final double TEMPERATURE_DECAY = 0.95; // Temperature decay factor
 
 	public static void main(String[] args) {
-		try {
-			var dataSource = new DataSource(CONTAINERS_PATH);
-			dataSource.load();
-			double temperature = Constants.INITIAL_TEMPERATURE;
-			var containers = dataSource.getContainers();
-			var circuits = dataSource.getCircuits();
+		var dataSource = new DataSource(CONTAINERS_PATH);
+		dataSource.load();
 
-			Router.getInstance().init(containers, OSM_PATH);
+		var containers = dataSource.getContainers();
+		var circuits = dataSource.getCircuits();
 
-			var solution = new Solution(circuits);
+		Router.getInstance().init(containers, OSM_PATH);
 
-			Long cost = solution.computeCost();
+		var initialSolution = new Solution(circuits);
 
-			System.out.println("Costo inicial: " + cost);
+		long cost = initialSolution.computeCost();
 
-			// Estructura concurrente para almacenar los vecinos recorridos
-			ConcurrentHashMap<Solution, Long> visitedNeighbors = new ConcurrentHashMap<>();
-			long bestFinalCost = cost;
+		System.out.println("Costo inicial: " + cost);
 
-			// Crear un pool de hilos
-			ExecutorService executorService = Executors.newFixedThreadPool(NUM_THREADS);
+		var solutionList = initialSolution.splitByShifts();
+//			var solutionList = new ArrayList<Solution>();
+//			solutionList.add(initialSolution);
 
-			while (temperature > Constants.MIN_TEMPERATURE) {
-				List<Future<Solution>> futures = new ArrayList<>();
-				for (int i = 0; i < NUM_THREADS; i++) {
-					futures.add(executorService.submit(new Worker(solution, temperature)));
-				}
-				
-				// Esperar a que todas las tareas terminen
-				for (Future<Solution> future : futures) {
-					solution = future.get();
-					cost = solution.computeCost();
-					
-					bestFinalCost = cost;
-				}
-
-				System.out.println("Costo actual: " + bestFinalCost);
-
-				temperature *= Constants.TEMPERATURE_DECREASE_FACTOR;
+		try (var executorService = Executors.newFixedThreadPool(solutionList.size())) {
+			List<Future<Solution>> futures = new ArrayList<>();
+			for (var solution : solutionList) {
+				futures.add(executorService.submit(new Worker(solution)));
 			}
 
-			executorService.shutdown();
+			List<Solution> solutions = new ArrayList<>();
+			for (Future<Solution> future : futures) {
+				solutions.add(future.get());
+			}
 
-			System.out.println("Costo final: " + bestFinalCost);
-			System.out.println("Listo");
-			
+			var finalSolution = Solution.merge(solutions);
+
+			System.out.println("Costo final: " + finalSolution.computeCost());
 		} catch (InterruptedException | ExecutionException e) {
 			e.printStackTrace();
 		}
