@@ -1,11 +1,17 @@
 package uy.edu.fing.hpc;
 
+import java.time.Duration;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Timer;
 import java.util.concurrent.*;
 
 public class Main {
 	private static final String CONTAINERS_PATH = "data/containers.csv";
 	private static final String OSM_PATH = "data/uruguay-latest.osm.pbf";
+
+	private static final String INITIAL_SOLUTION_PATH = "data/initial-solution.csv";
+	private static final String FINAL_SOLUTION_PATH = "data/final-solution.csv";
 
 	public static void main(String[] args) {
 		var dataSource = new DataSource(CONTAINERS_PATH);
@@ -17,13 +23,33 @@ public class Main {
 		Router.getInstance().init(containers, OSM_PATH);
 
 		var initialSolution = new Solution(circuits);
+		var solutionList = initialSolution.splitByShifts(1);
 
-		long initialCost = initialSolution.computeCost();
+		System.out.println("Costo inicial: " + initialSolution.computeCost());
+		DataSource.saveSolution(INITIAL_SOLUTION_PATH, initialSolution);
 
-		System.out.println("Costo inicial: " + initialCost);
+		long totalTime = 0;
+		Solution solution = null;
+		for (int i = 0; i < Constants.PROFILING_ITERATIONS; i++) {
+			long start = System.currentTimeMillis();
 
-		var solutionList = initialSolution.splitByShifts(12);
+			solution = run(solutionList);
 
+			long end = System.currentTimeMillis();
+			totalTime += end - start;
+
+			System.out.println("Costo final iteración " + i + ": " + solution.computeCost());
+
+			Router.getInstance().resetCache();
+		}
+
+		var averageTime = Duration.ofMillis(totalTime / Constants.PROFILING_ITERATIONS);
+		System.out.println("Tiempo promedio: " + averageTime.toString());
+
+		DataSource.saveSolution(FINAL_SOLUTION_PATH, solution);
+	}
+
+	private static Solution run(List<Solution> solutionList) {
 		try (var executorService = Executors.newFixedThreadPool(solutionList.size())) {
 			var solutions = new ArrayList<>(solutionList);
 			var futures = new ArrayList<Future<Solution>>(solutionList.size());
@@ -47,16 +73,12 @@ public class Main {
 					break;
 				}
 
-				//System.out.println("Costo actual: " + cost + " - Temperatura: " + temperature);
-
 				temperature *= Constants.TEMPERATURE_DECREASE_FACTOR;
 			}
 
-			var finalSolution = Solution.merge(solutions);
-
-			System.out.println("Costo final: " + finalSolution.computeCost());
+			return Solution.merge(solutions);
 		} catch (InterruptedException | ExecutionException e) {
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
 	}
 }

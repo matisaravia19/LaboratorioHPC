@@ -18,7 +18,7 @@ public class Router {
     private Map<Integer, GHPoint> points;
     private GraphHopper hopper;
 
-    private ConcurrentHashMap<Route, Long> routeCache;
+    private final ConcurrentHashMap<Route, Long> routeCache;
 
     private Router() {
         routeCache = new ConcurrentHashMap<>();
@@ -61,6 +61,10 @@ public class Router {
     public long getRouteTimeFromLandfill(Container to) {
         var toPoint = points.get(to.getId());
         return getRoute(landfillPoint, toPoint);
+    }
+
+    public void resetCache() {
+        routeCache.clear();
     }
 
     private long getRoute(GHPoint from, GHPoint to) {

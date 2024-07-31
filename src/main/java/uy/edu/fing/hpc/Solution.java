@@ -16,6 +16,10 @@ public class Solution {
         this.cost = -1;
     }
 
+    public List<Circuit> getCircuits() {
+        return circuits;
+    }
+
     public long computeCost() {
         if (cost >= 0) {
             return cost;
@@ -30,7 +34,7 @@ public class Solution {
 
     public List<Solution> splitByShifts(int n) {
         var completeSplit = splitByShifts();
-        return Lists.partition(completeSplit, n).stream()
+        return Lists.partition(completeSplit, completeSplit.size() / n).stream()
                 .map(Solution::merge)
                 .toList();
     }
@@ -105,7 +109,7 @@ public class Solution {
         var circuit1 = neighbor.copyRandomCircuit();
         var circuit2 = neighbor.copyRandomCircuitWithSameShiftAs(circuit1);
 
-        if (circuit1.isEmpty() || circuit2.isFull()) {
+        if (circuit1.isEmptyOrJustOne() || circuit2.isFull()) {
             return neighbor;
         }
 
@@ -125,6 +129,10 @@ public class Solution {
                 .filter(c -> c.getShift() == circuit.getShift())
                 .count();
         if (circuitsInShift >= Constants.TRUCK_COUNT) {
+            return neighbor;
+        }
+
+        if (circuit.isEmptyOrJustOne()){
             return neighbor;
         }
 

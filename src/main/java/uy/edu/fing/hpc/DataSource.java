@@ -43,6 +43,24 @@ public class DataSource {
         }
     }
 
+    public static void saveSolution(String path, Solution solution) {
+        try (var writer = new BufferedWriter(new FileWriter(path, false))) {
+            writer.write("Shift, Cost, Container count, Container IDs\n");
+            for (var circuit : solution.getCircuits()) {
+                var containers = circuit.getContainers();
+
+                writer.write(circuit.getShift().toString() + ", " + circuit.getCost() + ", " + containers.size() + ",");
+                for (var container : circuit.getContainers()) {
+                    writer.write(" " + container.getId());
+                }
+                writer.write("\n");
+            }
+
+         } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
     private void loadContainerAndAddToCircuit(String line) {
         var parts = line.split(";");
 
