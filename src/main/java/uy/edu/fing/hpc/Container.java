@@ -2,13 +2,11 @@ package uy.edu.fing.hpc;
 
 public class Container {
     private int id;
-    private Frequency frequency;
     private double latitude;
     private double longitude;
 
-    public Container(int id, Frequency frequency, double latitude, double longitude) {
+    public Container(int id, double latitude, double longitude) {
         this.id = id;
-        this.frequency = frequency;
         this.latitude = latitude;
         this.longitude = longitude;
     }

@@ -52,9 +52,8 @@ public class DataSource {
         var x = Double.parseDouble(parts[3]);
         var y = Double.parseDouble(parts[4]);
 
-        var frequency = getFrequency(shift);
         var coordinates = transformCoordinates(x, y);
-        var container = new Container(id, frequency, coordinates.y, coordinates.x);
+        var container = new Container(id, coordinates.y, coordinates.x);
         containers.add(container);
 
         var circuit = getCircuit(circuitName, shift);
@@ -104,13 +103,5 @@ public class DataSource {
         var result = new ProjCoordinate();
         transform.transform(new ProjCoordinate(x, y), result);
         return result;
-    }
-
-    private static Frequency getFrequency(Shift shift) {
-        return switch (shift) {
-            case SUN_MORNING -> Frequency.SUNDAYS;
-            case MON_TO_SAT_AFTERNOON, SUN_TO_FRI_NIGHT -> Frequency.SIX_TIMES_A_WEEK;
-            default -> Frequency.THREE_TIMES_A_WEEK;
-        };
     }
 }
