@@ -28,29 +28,6 @@ public class Solution {
         return cost;
     }
 
-    public List<Solution> splitByShifts(int n) {
-        var completeSplit = splitByShifts();
-        return Lists.partition(completeSplit, n).stream()
-                .map(Solution::merge)
-                .toList();
-    }
-
-    public List<Solution> splitByShifts() {
-        return circuits.stream()
-                .collect(Collectors.groupingBy(Circuit::getShift))
-                .values().stream()
-                .map(circuits -> new Solution(new ArrayList<>(circuits)))
-                .toList();
-    }
-
-    public static Solution merge(List<Solution> solutions) {
-        var circuits = solutions.stream()
-                .map(solution -> solution.circuits)
-                .flatMap(List::stream)
-                .toList();
-        return new Solution(circuits);
-    }
-
     public Solution getNeighbor() {
         var randomNeighborType = NeighborType.getRandom();
         return getNeighbor(randomNeighborType);
@@ -164,11 +141,6 @@ public class Solution {
         var circuitCopy = circuitsWithSameShift.get(i).copy();
         circuits.set(circuits.indexOf(circuitsWithSameShift.get(i)), circuitCopy);
         return circuitCopy;
-    }
-
-    private Solution fullCopy() {
-        var circuitsCopy = circuits.stream().map(Circuit::copy).toList();
-        return new Solution(circuitsCopy);
     }
 
     private Solution copy() {

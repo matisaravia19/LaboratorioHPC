@@ -16,47 +16,41 @@ public class Main {
 
 		Router.getInstance().init(containers, OSM_PATH);
 
-		var initialSolution = new Solution(circuits);
+		var solution = new Solution(circuits);
 
-		long initialCost = initialSolution.computeCost();
+		System.out.println("Costo inicial: " + solution.computeCost());
 
-		System.out.println("Costo inicial: " + initialCost);
-
-		var solutionList = initialSolution.splitByShifts(12);
-
-		try (var executorService = Executors.newFixedThreadPool(solutionList.size())) {
-			var solutions = new ArrayList<>(solutionList);
-			var futures = new ArrayList<Future<Solution>>(solutionList.size());
-
-			double temperature = Constants.INITIAL_TEMPERATURE;
-			while (temperature > Constants.MIN_TEMPERATURE) {
-				futures.clear();
-				for (var solution : solutions) {
-					futures.add(executorService.submit(new Worker(solution, temperature)));
+		double temperature = Constants.INITIAL_TEMPERATURE;
+		while (temperature > Constants.MIN_TEMPERATURE) {
+			int i = 0;
+			while (i < Constants.ITERATIONS_PER_WORKER) {
+				var neighbor = solution.getNeighbor();
+				if (acceptNeighbor(solution, neighbor, temperature)) {
+					solution = neighbor;
 				}
 
-				long cost = 0;
-				solutions.clear();
-				for (var future : futures) {
-					var solution = future.get();
-					cost += solution.computeCost();
-					solutions.add(solution);
-				}
-
-				if(cost < Constants.EXPECTED_COST) {
-					break;
-				}
-
-				//System.out.println("Costo actual: " + cost + " - Temperatura: " + temperature);
-
-				temperature *= Constants.TEMPERATURE_DECREASE_FACTOR;
+				i++;
 			}
 
-			var finalSolution = Solution.merge(solutions);
+			if(solution.computeCost() < Constants.EXPECTED_COST) {
+				break;
+			}
 
-			System.out.println("Costo final: " + finalSolution.computeCost());
-		} catch (InterruptedException | ExecutionException e) {
-			e.printStackTrace();
+			temperature *= Constants.TEMPERATURE_DECREASE_FACTOR;
 		}
+
+
+		System.out.println("Costo final: " + solution.computeCost());
+	}
+
+	private static boolean acceptNeighbor(Solution currentSolution, Solution neighbor, double temperature) {
+		long currentCost = currentSolution.computeCost();
+		long neighborCost = neighbor.computeCost();
+		if (neighborCost < currentCost) {
+			return true;
+		}
+
+		double probability = Math.exp((currentCost - neighborCost) / temperature);
+		return Random.nextDouble() < probability;
 	}
 }
