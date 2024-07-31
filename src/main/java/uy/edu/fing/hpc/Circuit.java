@@ -46,10 +46,6 @@ public class Circuit {
         return cost;
     }
 
-    public List<Container> getContainers() {
-        return containers;
-    }
-
     public Shift getShift() {
         return shift;
     }

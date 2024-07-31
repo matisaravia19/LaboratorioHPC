@@ -66,12 +66,12 @@ public class Router {
     private long getRoute(GHPoint from, GHPoint to) {
         var route = new Route(from, to);
 
-//        var cost = routeCache.get(route);
-//        if (cost != null) {
-//            return cost;
-//        }
+        var cost = routeCache.get(route);
+        if (cost != null) {
+            return cost;
+        }
 
-        var cost = route.calculate(hopper);
+        cost = route.calculate(hopper);
         routeCache.put(route, cost);
 
         return cost;

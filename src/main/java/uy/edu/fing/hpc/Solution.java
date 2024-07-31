@@ -166,11 +166,6 @@ public class Solution {
         return circuitCopy;
     }
 
-    private Solution fullCopy() {
-        var circuitsCopy = circuits.stream().map(Circuit::copy).toList();
-        return new Solution(circuitsCopy);
-    }
-
     private Solution copy() {
         var circuitsCopy = new ArrayList<>(circuits);
         return new Solution(circuitsCopy);
