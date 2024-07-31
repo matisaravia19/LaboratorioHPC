@@ -1,11 +1,13 @@
 package uy.edu.fing.hpc;
 
-import java.util.ArrayList;
-import java.util.concurrent.*;
+import java.time.Duration;
 
 public class Main {
 	private static final String CONTAINERS_PATH = "data/containers.csv";
 	private static final String OSM_PATH = "data/uruguay-latest.osm.pbf";
+
+	private static final String INITIAL_SOLUTION_PATH = "data/initial-solution.csv";
+	private static final String FINAL_SOLUTION_PATH = "data/final-solution.csv";
 
 	public static void main(String[] args) {
 		var dataSource = new DataSource(CONTAINERS_PATH);
@@ -16,10 +18,34 @@ public class Main {
 
 		Router.getInstance().init(containers, OSM_PATH);
 
-		var solution = new Solution(circuits);
+		var initialSolution = new Solution(circuits);
 
-		System.out.println("Costo inicial: " + solution.computeCost());
+		System.out.println("Costo inicial: " + initialSolution.computeCost());
 
+		long totalTime = 0;
+		Solution solution = null;
+		for (int i = 0; i < Constants.PROFILING_ITERATIONS; i++) {
+			long start = System.currentTimeMillis();
+
+			solution = run(initialSolution);
+
+			long end = System.currentTimeMillis();
+			totalTime += end - start;
+
+			System.out.println("Costo final iteración " + i + ": " + solution.computeCost());
+
+			Router.getInstance().resetCache();
+		}
+
+		var averageTime = Duration.ofMillis(totalTime / Constants.PROFILING_ITERATIONS);
+		System.out.println("Tiempo promedio: " + averageTime.toString());
+
+		DataSource.saveSolution(FINAL_SOLUTION_PATH, solution);
+
+		System.out.println("Costo final: " + solution.computeCost());
+	}
+
+	private static Solution run(Solution solution) {
 		double temperature = Constants.INITIAL_TEMPERATURE;
 		while (temperature > Constants.MIN_TEMPERATURE) {
 			int i = 0;
@@ -39,8 +65,7 @@ public class Main {
 			temperature *= Constants.TEMPERATURE_DECREASE_FACTOR;
 		}
 
-
-		System.out.println("Costo final: " + solution.computeCost());
+		return solution;
 	}
 
 	private static boolean acceptNeighbor(Solution currentSolution, Solution neighbor, double temperature) {

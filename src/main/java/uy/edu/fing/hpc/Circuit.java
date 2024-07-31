@@ -50,6 +50,10 @@ public class Circuit {
         return shift;
     }
 
+    public List<Container> getContainers() {
+        return containers;
+    }
+
     public void addContainer(Container container) {
         containers.add(container);
     }
@@ -64,6 +68,10 @@ public class Circuit {
 
     public boolean isEmpty() {
         return containers.isEmpty();
+    }
+
+    public boolean isEmptyOrJustOne() {
+        return containers.size() <= 1;
     }
 
     public Container getRandomContainer() {
@@ -84,11 +92,7 @@ public class Circuit {
     }
 
     public Circuit split() {
-        if (isEmpty()) {
-            return new Circuit(shift);
-        }
-
-        var i = Random.getRandomIndex(containers.size());
+        var i = Random.getRandomIndex(containers.size() - 1) + 1;
 
         var secondHalf = containers.subList(i, containers.size());
         var newCircuit = new Circuit(shift, new ArrayList<>(secondHalf));
