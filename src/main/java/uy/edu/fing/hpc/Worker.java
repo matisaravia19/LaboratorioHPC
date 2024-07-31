@@ -1,32 +1,26 @@
 package uy.edu.fing.hpc;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.*;
 
 public class Worker implements Callable<Solution> {
 	private Solution solution;
 	private double temperature;
 
-	public Worker(Solution initialSolution) {
+	public Worker(Solution initialSolution, double temperature) {
 		this.solution = initialSolution;
-		this.temperature = Constants.INITIAL_TEMPERATURE;
+		this.temperature = temperature;
 	}
 
 	@Override
 	public Solution call() {
-		while (temperature > Constants.MIN_TEMPERATURE) {
-			int i = 0;
-			while (i < Constants.ITERATIONS_PER_WORKER) { //Se puede agregar condicion de que si llega a una solucion suficientemente chica deje de iterar
-				var neighbor = solution.getNeighbor();
-				if (acceptNeighbor(solution, neighbor)) {
-					solution = neighbor;
-				}
-
-				i++;
+		int i = 0;
+		while (i < Constants.ITERATIONS_PER_WORKER) {
+			var neighbor = solution.getNeighbor();
+			if (acceptNeighbor(solution, neighbor)) {
+				solution = neighbor;
 			}
 
-			temperature *= Constants.TEMPERATURE_DECREASE_FACTOR;
+			i++;
 		}
 
 		return solution;

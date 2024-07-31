@@ -1,10 +1,7 @@
 package uy.edu.fing.hpc;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Semaphore;
 
 public class Main {
 	private static final String CONTAINERS_PATH = "data/containers.csv";
@@ -21,23 +18,38 @@ public class Main {
 
 		var initialSolution = new Solution(circuits);
 
-		long cost = initialSolution.computeCost();
+		long initialCost = initialSolution.computeCost();
 
-		System.out.println("Costo inicial: " + cost);
+		System.out.println("Costo inicial: " + initialCost);
 
-		var solutionList = initialSolution.splitByShifts();
-//			var solutionList = new ArrayList<Solution>();
-//			solutionList.add(initialSolution);
+		var solutionList = initialSolution.splitByShifts(12);
 
 		try (var executorService = Executors.newFixedThreadPool(solutionList.size())) {
-			List<Future<Solution>> futures = new ArrayList<>();
-			for (var solution : solutionList) {
-				futures.add(executorService.submit(new Worker(solution)));
-			}
+			var solutions = new ArrayList<>(solutionList);
+			var futures = new ArrayList<Future<Solution>>(solutionList.size());
 
-			List<Solution> solutions = new ArrayList<>();
-			for (Future<Solution> future : futures) {
-				solutions.add(future.get());
+			double temperature = Constants.INITIAL_TEMPERATURE;
+			while (temperature > Constants.MIN_TEMPERATURE) {
+				futures.clear();
+				for (var solution : solutions) {
+					futures.add(executorService.submit(new Worker(solution, temperature)));
+				}
+
+				long cost = 0;
+				solutions.clear();
+				for (var future : futures) {
+					var solution = future.get();
+					cost += solution.computeCost();
+					solutions.add(solution);
+				}
+
+				if(cost < Constants.EXPECTED_COST) {
+					break;
+				}
+
+				//System.out.println("Costo actual: " + cost + " - Temperatura: " + temperature);
+
+				temperature *= Constants.TEMPERATURE_DECREASE_FACTOR;
 			}
 
 			var finalSolution = Solution.merge(solutions);

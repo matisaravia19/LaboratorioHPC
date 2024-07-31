@@ -1,6 +1,5 @@
 package uy.edu.fing.hpc;
 
-import com.graphhopper.GHRequest;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
@@ -10,7 +9,6 @@ import com.graphhopper.util.shapes.GHPoint;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Router {
@@ -68,12 +66,12 @@ public class Router {
     private long getRoute(GHPoint from, GHPoint to) {
         var route = new Route(from, to);
 
-        var cost = routeCache.get(route);
-        if (cost != null) {
-            return cost;
-        }
+//        var cost = routeCache.get(route);
+//        if (cost != null) {
+//            return cost;
+//        }
 
-        cost = route.calculate(hopper);
+        var cost = route.calculate(hopper);
         routeCache.put(route, cost);
 
         return cost;

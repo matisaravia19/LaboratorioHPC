@@ -1,5 +1,7 @@
 package uy.edu.fing.hpc;
 
+import com.google.common.collect.Lists;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -24,6 +26,13 @@ public class Solution {
             cost += circuit.getCost();
         }
         return cost;
+    }
+
+    public List<Solution> splitByShifts(int n) {
+        var completeSplit = splitByShifts();
+        return Lists.partition(completeSplit, n).stream()
+                .map(Solution::merge)
+                .toList();
     }
 
     public List<Solution> splitByShifts() {
