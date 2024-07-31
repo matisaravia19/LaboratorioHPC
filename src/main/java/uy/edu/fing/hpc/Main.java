@@ -23,7 +23,7 @@ public class Main {
 		Router.getInstance().init(containers, OSM_PATH);
 
 		var initialSolution = new Solution(circuits);
-		var solutionList = initialSolution.splitByShifts(1);
+		var solutionList = initialSolution.splitByShifts(12);
 
 		System.out.println("Costo inicial: " + initialSolution.computeCost());
 		DataSource.saveSolution(INITIAL_SOLUTION_PATH, initialSolution);
