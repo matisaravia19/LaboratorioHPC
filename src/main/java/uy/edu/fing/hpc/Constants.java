@@ -9,6 +9,6 @@ public class Constants {
     public static final double MIN_TEMPERATURE = 0.001;
     public static final int ITERATIONS_PER_WORKER = 100;
 
-    public static final int PROFILING_ITERATIONS = 25;
+    public static final int PROFILING_ITERATIONS = 1;
     public static final long EXPECTED_COST = 1300000000;
 }
